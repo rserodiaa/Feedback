@@ -13,7 +13,7 @@ struct FeedbackApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            FeedbackList()
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
         }
     }

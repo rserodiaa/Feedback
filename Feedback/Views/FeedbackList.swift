@@ -1,5 +1,5 @@
 //
-//  ContentView.swift
+//  FeedbackList.swift
 //  Feedback
 //
 //  Created by Rahul Serodia on 04/07/25..
@@ -8,7 +8,7 @@
 import SwiftUI
 import CoreData
 
-struct ContentView: View {
+struct FeedbackList: View {
     @Environment(\.managedObjectContext) private var viewContext
 
     @FetchRequest(
@@ -29,14 +29,12 @@ struct ContentView: View {
                 .onDelete(perform: deleteItems)
             }
             .toolbar {
-#if os(iOS)
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-#endif
-                ToolbarItem {
+                ToolbarItemGroup(placement: .topBarTrailing) {
                     Button(action: addItem) {
                         Label("Add Item", systemImage: "plus")
+                    }
+                    Button(action: addItem) {
+                        Label("Edit", systemImage: "square.and.pencil")
                     }
                 }
             }
@@ -84,5 +82,5 @@ private let itemFormatter: DateFormatter = {
 }()
 
 #Preview {
-    ContentView().environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
+    FeedbackList().environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
 }
