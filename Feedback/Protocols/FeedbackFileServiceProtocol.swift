@@ -6,7 +6,7 @@
 //
 
 protocol FeedbackFileServiceProtocol {
-    func setupDirectories()
-    func saveFeedback(feedback: Feedback, toAzure: Bool) async throws -> String
+    func save(feedback: Feedback, toAzure: Bool) async throws -> String
     func moveFeedbackToAzure(fileName: String) async throws
+    func deleteFeedback(fileName: String, isAzure: Bool) throws
 }

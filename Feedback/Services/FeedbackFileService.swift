@@ -7,6 +7,7 @@
 
 import Foundation
 
+// TODO: apply atomic if needed
 final class FeedbackFileService: FeedbackFileServiceProtocol {
     static let shared = FeedbackFileService()
     private let fileManager = FileManager.default
@@ -17,18 +18,12 @@ final class FeedbackFileService: FeedbackFileServiceProtocol {
     private var azureURL: URL { documentsURL.appendingPathComponent("Azure") }
     private var cacheURL: URL { documentsURL.appendingPathComponent("FeedbackCache") }
     
-    private init() {}
-    //    private init() {
-    //        try? fileManager.createDirectory(at: azureURL, withIntermediateDirectories: true)
-    //        try? fileManager.createDirectory(at: cacheURL, withIntermediateDirectories: true)
-    //    }
-    func setupDirectories() {
+    private init() {
         try? fileManager.createDirectory(at: azureURL, withIntermediateDirectories: true)
         try? fileManager.createDirectory(at: cacheURL, withIntermediateDirectories: true)
     }
 
-
-    func saveFeedback(feedback: Feedback, toAzure: Bool) throws -> String {
+    func save(feedback: Feedback, toAzure: Bool) throws -> String {
         let dir = toAzure ? azureURL : cacheURL
         let fileName = "\(feedback.id.uuidString).txt"
         let fileURL = dir.appendingPathComponent(fileName)

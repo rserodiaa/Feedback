@@ -19,12 +19,21 @@ struct Feedback: Identifiable {
     var createdAt: Date
     var fileName: String
     
-    init(entity: CDFeedback) {
-        self.id = entity.id ?? UUID()
-        self.title = entity.title ?? ""
-        self.message = entity.message ?? ""
-        self.status = FeedbackStatus(rawValue: entity.status ?? "failed") ?? .failed
-        self.createdAt = entity.createdAt ?? Date()
-        self.fileName = entity.fileName ?? ""
+    init(id: UUID, title: String, message: String, status: FeedbackStatus, createdAt: Date, fileName: String) {
+        self.id = id
+        self.title = title
+        self.message = message
+        self.status = status
+        self.createdAt = createdAt
+        self.fileName = fileName
+    }
+    
+    init(from entity: CDFeedback) {
+        self.init(id: entity.id ?? UUID(),
+                  title: entity.title ?? "",
+                  message: entity.message ?? "",
+                  status: FeedbackStatus(rawValue: entity.status ?? "failed") ?? .failed,
+                  createdAt: entity.createdAt ?? Date(),
+                  fileName: entity.fileName ?? "")
     }
 }

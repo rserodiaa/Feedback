@@ -7,7 +7,7 @@
 
 protocol FeedbackStorageServiceProtocol {
     func fetchFeedbacks() async throws -> [Feedback]
-    func createFeedback(_ model: Feedback, fileName: String)
-    func updateFeedback(_ model: Feedback)
-    func deleteFeedback(_ model: Feedback)
+    func create(feedback: Feedback)
+    func update(feedback: Feedback)
+    func delete(feedback: Feedback)
 }
