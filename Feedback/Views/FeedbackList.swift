@@ -9,66 +9,62 @@ import SwiftUI
 import CoreData
 
 struct FeedbackList: View {
-    @Environment(\.managedObjectContext) private var viewContext
-
-    @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \Item.timestamp, ascending: true)],
-        animation: .default)
-    private var items: FetchedResults<Item>
-
+    @StateObject private var viewModel = FeedbackViewModel(repository: FeedbackRepository())
+    @State private var errorMessage: String?
+    @State private var showErrorAlert = false
+    
     var body: some View {
-        NavigationView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp!, formatter: itemFormatter)")
-                    } label: {
-                        Text(item.timestamp!, formatter: itemFormatter)
-                    }
-                }
-                .onDelete(perform: deleteItems)
+        VStack {
+            List(viewModel.feedbacks, id: \.id) { feedback in
+                Text(feedback.title)
+                Text(feedback.message)
             }
-            .toolbar {
-                ToolbarItemGroup(placement: .topBarTrailing) {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                    Button(action: addItem) {
-                        Label("Edit", systemImage: "square.and.pencil")
+            
+            Button("Create Feedback") {
+                Task {
+                    do {
+                        try await viewModel.createFeedback(title: "Another Note", message: "This is a test feedback message.")
+                    } catch {
+                        await MainActor.run {
+                            errorMessage = error.localizedDescription
+                            showErrorAlert = true
+                        }
                     }
                 }
             }
-            Text("Select an item")
         }
+        .onAppear {
+            Task {
+                await viewModel.loadFeedbacks()
+            }
+        }
+        .alert("Error", isPresented: $showErrorAlert, actions: {
+            Button("OK", role: .cancel) { }
+        }, message: {
+            Text(errorMessage ?? "Something went wrong.")
+        })
     }
-
+    
+    
     private func addItem() {
         withAnimation {
-            let newItem = Item(context: viewContext)
-            newItem.timestamp = Date()
-
+            
             do {
-                try viewContext.save()
+                
             } catch {
-                // Replace this implementation with code to handle the error appropriately.
-                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
+                
             }
         }
     }
-
+    
     private func deleteItems(offsets: IndexSet) {
         withAnimation {
-            offsets.map { items[$0] }.forEach(viewContext.delete)
-
+            
+            
             do {
-                try viewContext.save()
+                
             } catch {
-                // Replace this implementation with code to handle the error appropriately.
-                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
+                
             }
         }
     }
@@ -82,5 +78,5 @@ private let itemFormatter: DateFormatter = {
 }()
 
 #Preview {
-    FeedbackList().environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
+    
 }

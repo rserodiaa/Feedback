@@ -7,14 +7,7 @@
 
 import Foundation
 
-enum FeedbackError: Error {
-    case alreadyExists
-    case notFound
-    case saveFailed
-    case deleteFailed
-}
-
-class FeedbackRepository: FeedbackRepoProtocol {
+final class FeedbackRepository: FeedbackRepoProtocol {
     
     private let fileService: FeedbackFileServiceProtocol
     private let storageService: FeedbackStorageServiceProtocol
