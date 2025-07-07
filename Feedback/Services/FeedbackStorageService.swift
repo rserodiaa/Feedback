@@ -14,48 +14,64 @@ final class FeedbackStorageService: FeedbackStorageServiceProtocol {
         self.context = context
     }
 
-    func fetchFeedbacks() -> [Feedback] {
-        let request: NSFetchRequest<CDFeedback> = CDFeedback.fetchRequest()
-        let entities = (try? context.fetch(request)) ?? []
-        return entities.map { Feedback(from: $0) }
-    }
-    
-    func create(feedback: Feedback) {
-        let entity = CDFeedback(context: context)
-        entity.id = feedback.id
-        entity.title = feedback.title
-        entity.message = feedback.message
-        entity.status = feedback.status.rawValue
-        entity.createdAt = feedback.createdAt
-        entity.fileName = feedback.fileName
-        PersistenceController.shared.saveContext()
-    }
-    
-    func update(feedback: Feedback) {
-        let request: NSFetchRequest<CDFeedback> = CDFeedback.fetchRequest()
-        request.predicate = NSPredicate(format: "title == %@", feedback.title as CVarArg)
-        guard let entity = (try? context.fetch(request))?.first else { return }
-        entity.title = feedback.title
-        entity.message = feedback.message
-        entity.status = feedback.status.rawValue
-        entity.fileName = feedback.fileName
-        PersistenceController.shared.saveContext()
-    }
-    
-    func delete(feedback: Feedback) {
-        let request: NSFetchRequest<CDFeedback> = CDFeedback.fetchRequest()
-        request.predicate = NSPredicate(format: "id == %@", feedback.id as CVarArg)
-        if let entity = (try? context.fetch(request))?.first {
-            context.delete(entity)
-            PersistenceController.shared.saveContext()
+    func fetchFeedback(by title: String) async throws -> CDFeedback? {
+        try await context.perform {
+            let request: NSFetchRequest<CDFeedback> = CDFeedback.fetchRequest()
+            request.predicate = NSPredicate(format: "title == %@", title as CVarArg)
+            request.fetchLimit = 1
+            return try self.context.fetch(request).first
         }
     }
     
-    // todo addd to FeedbackDataServiceProtocol
-    func fetchFailed() -> [Feedback] {
-        let request: NSFetchRequest<CDFeedback> = CDFeedback.fetchRequest()
-        request.predicate = NSPredicate(format: "status == %@", FeedbackStatus.failed.rawValue)
-        let entities = (try? context.fetch(request)) ?? []
-        return entities.map { Feedback(from: $0) }
+    func fetchFeedbacks() async throws -> [Feedback] {
+        try await context.perform {
+            let request: NSFetchRequest<CDFeedback> = CDFeedback.fetchRequest()
+            let entities = (try self.context.fetch(request))
+            return entities.map { Feedback(from: $0) }
+        }
+    }
+    
+    func create(feedback: Feedback) async throws {
+        try await context.perform {
+            let entity = CDFeedback(context: self.context)
+            entity.id = feedback.id
+            entity.title = feedback.title
+            entity.message = feedback.message
+            entity.status = feedback.status.rawValue
+            entity.createdAt = feedback.createdAt
+            entity.fileName = feedback.fileName
+            try PersistenceController.shared.saveContext()
+        }
+    }
+    
+    func update(feedback: Feedback) async throws {
+        guard let entity = try await fetchFeedback(by: feedback.title) else { return }
+        try await context.perform {
+            entity.message = feedback.message
+            entity.status = feedback.status.rawValue
+            entity.fileName = feedback.fileName
+            try PersistenceController.shared.saveContext()
+        }
+    }
+    
+    func delete(feedback: Feedback) async throws {
+        try await context.perform {
+            let request: NSFetchRequest<CDFeedback> = CDFeedback.fetchRequest()
+            request.predicate = NSPredicate(format: "id == %@", feedback.id as CVarArg)
+            if let entity = try self.context.fetch(request).first {
+                self.context.delete(entity)
+                try PersistenceController.shared.saveContext()
+            }
+        }
+    }
+    
+    // todo addd to FeedbackDataServiceProtocol if needed externally
+    func fetchFailed() async throws -> [Feedback]{
+        try await context.perform {
+            let request: NSFetchRequest<CDFeedback> = CDFeedback.fetchRequest()
+            request.predicate = NSPredicate(format: "status == %@", FeedbackStatus.failed.rawValue)
+            let entities = try self.context.fetch(request)
+            return entities.map { Feedback(from: $0) }
+        }
     }
 }

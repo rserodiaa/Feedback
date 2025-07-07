@@ -7,7 +7,7 @@
 
 protocol FeedbackRepoProtocol {
     func fetchFeedbacks() async throws -> [Feedback]
-    func saveFeedback(_ feedback: Feedback) async throws
-    func deleteFeedback(_ feedback: Feedback) async throws
-    func updateFeedback(_ feedback: Feedback) async throws
+    func createFeedback(with title: String, and message: String) async throws -> Feedback
+    func deleteFeedback(with title: String) async throws
+    func updateFeedback(with title: String, and message: String) async throws
 }

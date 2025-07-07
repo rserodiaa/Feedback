@@ -36,14 +36,15 @@ final class PersistenceController {
         return container
     }()
     
-    func saveContext() {
+    func saveContext() throws {
         let context = container.viewContext
         if context.hasChanges {
             do {
                 try context.save()
             } catch {
                 let nserror = error as NSError
-                fatalError("Unresolved error \(nserror), \(nserror.userInfo)")
+                print("Unresolved error in PersistenceController \(nserror), \(nserror.userInfo)")
+                throw error
             }
         }
     }

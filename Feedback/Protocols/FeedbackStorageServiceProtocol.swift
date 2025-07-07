@@ -6,8 +6,9 @@
 //
 
 protocol FeedbackStorageServiceProtocol {
+    func fetchFeedback(by title: String) async throws -> CDFeedback?
     func fetchFeedbacks() async throws -> [Feedback]
-    func create(feedback: Feedback)
-    func update(feedback: Feedback)
-    func delete(feedback: Feedback)
+    func create(feedback: Feedback) async throws
+    func update(feedback: Feedback) async throws
+    func delete(feedback: Feedback) async throws
 }

@@ -7,7 +7,6 @@
 
 import Foundation
 
-// TODO: apply atomic if needed
 final class FeedbackFileService: FeedbackFileServiceProtocol {
     static let shared = FeedbackFileService()
     private let fileManager = FileManager.default
@@ -23,28 +22,34 @@ final class FeedbackFileService: FeedbackFileServiceProtocol {
         try? fileManager.createDirectory(at: cacheURL, withIntermediateDirectories: true)
     }
 
-    func save(feedback: Feedback, toAzure: Bool) throws -> String {
-        let dir = toAzure ? azureURL : cacheURL
-        let fileName = "\(feedback.id.uuidString).txt"
-        let fileURL = dir.appendingPathComponent(fileName)
-        let content = "Title: \(feedback.title)\nMessage: \(feedback.message)"
-        try content.write(to: fileURL, atomically: true, encoding: .utf8)
-        return fileName
+    func save(feedback: Feedback, toAzure: Bool) async throws -> String {
+        try await Task {
+            let dir = toAzure ? azureURL : cacheURL
+            let fileName = "\(feedback.id.uuidString).txt"
+            let fileURL = dir.appendingPathComponent(fileName)
+            let content = "Title: \(feedback.title)\nMessage: \(feedback.message)"
+            try content.write(to: fileURL, atomically: true, encoding: .utf8)
+            return fileName
+        }.value
     }
 
-    func moveFeedbackToAzure(fileName: String) throws {
-        let fromURL = cacheURL.appendingPathComponent(fileName)
-        let toURL = azureURL.appendingPathComponent(fileName)
-        if fileManager.fileExists(atPath: fromURL.path) {
-            try fileManager.moveItem(at: fromURL, to: toURL)
-        }
+    func moveFeedbackToAzure(fileName: String) async throws {
+        try await Task {
+            let fromURL = cacheURL.appendingPathComponent(fileName)
+            let toURL = azureURL.appendingPathComponent(fileName)
+            if fileManager.fileExists(atPath: fromURL.path) {
+                try fileManager.moveItem(at: fromURL, to: toURL)
+            }
+        }.value
     }
     
-    func deleteFeedback(fileName: String, isAzure: Bool) throws {
+    func deleteFeedback(fileName: String, isAzure: Bool) async throws {
+        try await Task {
             let dir = isAzure ? azureURL : cacheURL
             let fileURL = dir.appendingPathComponent(fileName)
             if fileManager.fileExists(atPath: fileURL.path) {
                 try fileManager.removeItem(at: fileURL)
             }
-        }
+        }.value
+    }
 }
