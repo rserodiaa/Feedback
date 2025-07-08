@@ -46,6 +46,7 @@ struct FeedbackList: View {
                                 activeSheet = FeedbackSheetData(title: feedback.title, message: feedback.message, isEditing: true)
                             }
                         }
+                        .onDelete(perform: deleteFeedback)
                     }
                 }
             }
@@ -58,23 +59,19 @@ struct FeedbackList: View {
                         Image(systemName: "plus")
                     }
                 }
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    if !viewModel.feedbacks.isEmpty {
-                        Button {
-                            //TODO: Implement delete functionality
-                        } label: {
-                            Image(systemName: "pencil")
-                        }
-                    }
-                }
             }
             .sheet(item: $activeSheet) { sheetData in
                 FeedbackSheetView(sheetData: sheetData) { updatedTitle, updatedMessage in
                     Task {
-                        if sheetData.isEditing {
-                            try await viewModel.updateFeedback(title: updatedTitle, message: updatedMessage)
-                        } else {
-                            try await viewModel.createFeedback(title: updatedTitle, message: updatedMessage)
+                        do {
+                            if sheetData.isEditing {
+                                try await viewModel.updateFeedback(with: updatedTitle, and: updatedMessage)
+                            } else {
+                                try await viewModel.createFeedback(with: updatedTitle, and: updatedMessage)
+                            }
+                        } catch {
+                            errorMessage = (error as? LocalizedError)?.errorDescription ?? "Unknown error occurred."
+                            showErrorAlert = true
                         }
                         activeSheet = nil
                     }
@@ -97,4 +94,19 @@ struct FeedbackList: View {
             Text(errorMessage ?? "Something went wrong.")
         })
     }
+    
+    private func deleteFeedback(at offsets: IndexSet) {
+        Task {
+            for index in offsets {
+                let feedback = viewModel.feedbacks[index]
+                do {
+                    try await viewModel.deleteFeedback(with: feedback.title)
+                } catch {
+                    errorMessage = (error as? LocalizedError)?.errorDescription ?? "Failed to delete feedback."
+                    showErrorAlert = true
+                }
+            }
+        }
+    }
+
 }

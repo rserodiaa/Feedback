@@ -47,17 +47,12 @@ final class FeedbackRepository: FeedbackRepoProtocol {
         guard let existingEntity = try await storageService.fetchFeedback(by: title) else {
             throw FeedbackError.notFound
         }
-        let id = existingEntity.id ?? UUID()
         let status = FeedbackStatus(rawValue: existingEntity.status ?? "failed") ?? .failed
-        let createdAt = existingEntity.createdAt ?? Date()
-        let existingFileName = existingEntity.fileName ?? ""
-        
-        let feedback = Feedback(id: id, title: title, message: message, status: status, createdAt: createdAt, fileName: existingFileName)
-        
+        var feedback = Feedback(from: existingEntity)
         do {
-            let fileName = try await fileService.save(feedback: feedback, toAzure: status == .success)
-            let updatedFeedback = Feedback(id: id, title: title, message: message, status: status, createdAt: createdAt, fileName: fileName)
-            try await storageService.update(feedback: updatedFeedback)
+            let _ = try await fileService.save(feedback: feedback, toAzure: status == .success)
+            feedback.message = message
+            try await storageService.update(feedback: feedback)
         } catch {
             print("Repo - Error saving feedback: \(error)")
             throw FeedbackError.saveFailed
@@ -65,11 +60,18 @@ final class FeedbackRepository: FeedbackRepoProtocol {
     }
     
     func deleteFeedback(with title: String) async throws {
-        guard let feedback = try await storageService.fetchFeedback(by: title),
-                let fileName = feedback.fileName,
-                let status = feedback.status else {
+        guard let feedbackEntity = try await storageService.fetchFeedback(by: title),
+                let fileName = feedbackEntity.fileName,
+                let status = feedbackEntity.status else {
             throw FeedbackError.deleteFailed
         }
-        try await fileService.deleteFeedback(fileName: fileName, isAzure: FeedbackStatus(rawValue: status) == .success)
+        let feedback = Feedback(from: feedbackEntity)
+        do {
+            try await fileService.deleteFeedback(fileName: fileName, isAzure: FeedbackStatus(rawValue: status) == .success)
+            try await storageService.delete(feedback: feedback)
+        } catch {
+            throw FeedbackError.deleteFailed
+        }
+
     }
 }
