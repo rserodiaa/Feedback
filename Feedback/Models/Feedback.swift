@@ -36,4 +36,8 @@ struct Feedback: Identifiable {
                   createdAt: entity.createdAt ?? Date(),
                   fileName: entity.fileName ?? "")
     }
+    
+    var clippedMessage: String {
+        return message.truncated(to: 100)
+    }
 }

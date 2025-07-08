@@ -6,20 +6,15 @@
 //
 
 import SwiftUI
-import CoreData
 
 struct FeedbackList: View {
     @StateObject private var viewModel = FeedbackViewModel(repository: FeedbackRepository())
-    @State private var errorMessage: String?
-    @State private var showErrorAlert = false
     @State private var activeSheet: FeedbackSheetData?
-    @State private var isLoading = false
     
-    // todo: lazy load feedbacks
     var body: some View {
         NavigationStack {
             VStack {
-                if isLoading {
+                if viewModel.isLoading {
                         ProgressView("Loading feedbacks...")
                             .progressViewStyle(CircularProgressViewStyle())
                             .padding()
@@ -29,7 +24,7 @@ struct FeedbackList: View {
                             HStack {
                                 VStack(alignment: .leading) {
                                     Text(feedback.title).font(.headline)
-                                    Text(feedback.message).font(.subheadline)
+                                    Text(feedback.clippedMessage).font(.subheadline)
                                 }
                                 Spacer()
                                 if feedback.status == .success {
@@ -63,15 +58,10 @@ struct FeedbackList: View {
             .sheet(item: $activeSheet) { sheetData in
                 FeedbackSheetView(sheetData: sheetData) { updatedTitle, updatedMessage in
                     Task {
-                        do {
-                            if sheetData.isEditing {
-                                try await viewModel.updateFeedback(with: updatedTitle, and: updatedMessage)
-                            } else {
-                                try await viewModel.createFeedback(with: updatedTitle, and: updatedMessage)
-                            }
-                        } catch {
-                            errorMessage = (error as? LocalizedError)?.errorDescription ?? "Unknown error occurred."
-                            showErrorAlert = true
+                        if sheetData.isEditing {
+                            try await viewModel.updateFeedback(with: updatedTitle, and: updatedMessage)
+                        } else {
+                            try await viewModel.createFeedback(with: updatedTitle, and: updatedMessage)
                         }
                         activeSheet = nil
                     }
@@ -82,29 +72,22 @@ struct FeedbackList: View {
         }
 
         .onAppear {
-            isLoading = true
             Task {
                 await viewModel.loadFeedbacks()
-                isLoading = false
             }
         }
-        .alert("Error", isPresented: $showErrorAlert, actions: {
+        .alert("Error", isPresented: $viewModel.showErrorAlert) {
             Button("OK", role: .cancel) { }
-        }, message: {
-            Text(errorMessage ?? "Something went wrong.")
-        })
+        } message: {
+            Text(viewModel.errorMessage ?? "Something went wrong.")
+        }
     }
     
     private func deleteFeedback(at offsets: IndexSet) {
         Task {
             for index in offsets {
                 let feedback = viewModel.feedbacks[index]
-                do {
-                    try await viewModel.deleteFeedback(with: feedback.title)
-                } catch {
-                    errorMessage = (error as? LocalizedError)?.errorDescription ?? "Failed to delete feedback."
-                    showErrorAlert = true
-                }
+                try await viewModel.deleteFeedback(with: feedback.title)
             }
         }
     }

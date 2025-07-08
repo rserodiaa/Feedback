@@ -9,6 +9,10 @@ import Foundation
 
 class FeedbackViewModel: ObservableObject {
     @Published var feedbacks: [Feedback] = []
+    @Published var isLoading = false
+    @Published var errorMessage: String?
+    @Published var showErrorAlert = false
+
     private let repository: FeedbackRepoProtocol
     
     init(repository: FeedbackRepoProtocol) {
@@ -17,11 +21,14 @@ class FeedbackViewModel: ObservableObject {
     
     @MainActor
     func loadFeedbacks() async {
+        isLoading = true
+        defer { isLoading = false }
         do {
             let allFeedbacks = try await repository.fetchFeedbacks()
             feedbacks = allFeedbacks
         } catch {
             print("ViewModel - Error fetching feedbacks: \(error)")
+            await handle(error)
         }
     }
     
@@ -33,7 +40,7 @@ class FeedbackViewModel: ObservableObject {
             }
         } catch {
             print("ViewModel - Error creating feedback: \(error)")
-            throw error
+            await handle(error)
         }
     }
     
@@ -43,7 +50,7 @@ class FeedbackViewModel: ObservableObject {
             await loadFeedbacks()
         } catch {
             print("ViewModel - Error updating feedback: \(error)")
-            throw error
+            await handle(error)
         }
     }
     
@@ -53,7 +60,14 @@ class FeedbackViewModel: ObservableObject {
             await loadFeedbacks()
         } catch {
             print("ViewModel - Error deleting feedback: \(error)")
-            throw error
+            await handle(error)
+        }
+    }
+    
+    private func handle(_ error: Error) async {
+        await MainActor.run {
+            self.errorMessage = (error as? LocalizedError)?.errorDescription ?? "Something went wrong."
+            self.showErrorAlert = true
         }
     }
 }
