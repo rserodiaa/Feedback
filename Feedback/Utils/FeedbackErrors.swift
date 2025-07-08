@@ -25,7 +25,7 @@ enum FeedbackError: LocalizedError {
         case .notFound:
             return "Feedback not found."
         case .syncFailed:
-            return "Feedback syncing failed"
+            return "Feedback syncing failed."
         }
     }
 }
