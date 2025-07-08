@@ -12,30 +12,83 @@ struct FeedbackList: View {
     @StateObject private var viewModel = FeedbackViewModel(repository: FeedbackRepository())
     @State private var errorMessage: String?
     @State private var showErrorAlert = false
+    @State private var activeSheet: FeedbackSheetData?
+    @State private var isLoading = false
     
+    // todo: lazy load feedbacks
     var body: some View {
-        VStack {
-            List(viewModel.feedbacks, id: \.id) { feedback in
-                Text(feedback.title)
-                Text(feedback.message)
-            }
-            
-            Button("Create Feedback") {
-                Task {
-                    do {
-                        try await viewModel.createFeedback(title: "Another Note", message: "This is a test feedback message.")
-                    } catch {
-                        await MainActor.run {
-                            errorMessage = error.localizedDescription
-                            showErrorAlert = true
+        NavigationStack {
+            VStack {
+                if isLoading {
+                        ProgressView("Loading feedbacks...")
+                            .progressViewStyle(CircularProgressViewStyle())
+                            .padding()
+                } else {
+                    List {
+                        ForEach(viewModel.feedbacks) { feedback in
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    Text(feedback.title).font(.headline)
+                                    Text(feedback.message).font(.subheadline)
+                                }
+                                Spacer()
+                                if feedback.status == .success {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundColor(.green)
+                                } else {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundColor(.red)
+                                }
+                            }
+                            
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                activeSheet = FeedbackSheetData(title: feedback.title, message: feedback.message, isEditing: true)
+                            }
                         }
                     }
                 }
             }
+            .navigationTitle("Feedbacks")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        activeSheet = FeedbackSheetData(title: "", message: "", isEditing: false)
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    if !viewModel.feedbacks.isEmpty {
+                        Button {
+                            //TODO: Implement delete functionality
+                        } label: {
+                            Image(systemName: "pencil")
+                        }
+                    }
+                }
+            }
+            .sheet(item: $activeSheet) { sheetData in
+                FeedbackSheetView(sheetData: sheetData) { updatedTitle, updatedMessage in
+                    Task {
+                        if sheetData.isEditing {
+                            try await viewModel.updateFeedback(title: updatedTitle, message: updatedMessage)
+                        } else {
+                            try await viewModel.createFeedback(title: updatedTitle, message: updatedMessage)
+                        }
+                        activeSheet = nil
+                    }
+                } onCancel: {
+                    activeSheet = nil
+                }
+            }
         }
+
         .onAppear {
+            isLoading = true
             Task {
                 await viewModel.loadFeedbacks()
+                isLoading = false
             }
         }
         .alert("Error", isPresented: $showErrorAlert, actions: {
@@ -44,39 +97,4 @@ struct FeedbackList: View {
             Text(errorMessage ?? "Something went wrong.")
         })
     }
-    
-    
-    private func addItem() {
-        withAnimation {
-            
-            do {
-                
-            } catch {
-                
-            }
-        }
-    }
-    
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            
-            
-            do {
-                
-            } catch {
-                
-            }
-        }
-    }
-}
-
-private let itemFormatter: DateFormatter = {
-    let formatter = DateFormatter()
-    formatter.dateStyle = .short
-    formatter.timeStyle = .medium
-    return formatter
-}()
-
-#Preview {
-    
 }
