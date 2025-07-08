@@ -65,8 +65,7 @@ final class FeedbackStorageService: FeedbackStorageServiceProtocol {
         }
     }
     
-    // todo addd to FeedbackDataServiceProtocol if needed externally
-    func fetchFailed() async throws -> [Feedback]{
+    func fetchFailed() async throws -> [Feedback] {
         try await context.perform {
             let request: NSFetchRequest<CDFeedback> = CDFeedback.fetchRequest()
             request.predicate = NSPredicate(format: "status == %@", FeedbackStatus.failed.rawValue)

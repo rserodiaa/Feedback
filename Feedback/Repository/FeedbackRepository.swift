@@ -12,9 +12,8 @@ final class FeedbackRepository: FeedbackRepoProtocol {
     private let fileService: FeedbackFileServiceProtocol
     private let storageService: FeedbackStorageServiceProtocol
     
-    //TODO: refactor to inject from view
-    init(fileService: FeedbackFileServiceProtocol = FeedbackFileService.shared,
-         storageService: FeedbackStorageServiceProtocol = FeedbackStorageService()) {
+    init(fileService: FeedbackFileServiceProtocol,
+         storageService: FeedbackStorageServiceProtocol) {
         self.fileService = fileService
         self.storageService = storageService
     }
@@ -72,6 +71,19 @@ final class FeedbackRepository: FeedbackRepoProtocol {
         } catch {
             throw FeedbackError.deleteFailed
         }
-
+    }
+    
+    func syncFailedFeedbacks() async throws {
+        do {
+            let failed = try await storageService.fetchFailed()
+            for var feedback in failed {
+                try await fileService.moveFeedbackToAzure(fileName: feedback.fileName)
+                feedback.status = .success
+                try await storageService.update(feedback: feedback)
+            }
+        } catch {
+            print("Repository - Error sync failed feedbacks: \(error)")
+            throw FeedbackError.syncFailed
+        }
     }
 }

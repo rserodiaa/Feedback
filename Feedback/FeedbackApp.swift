@@ -9,12 +9,24 @@ import SwiftUI
 
 @main
 struct FeedbackApp: App {
-    let persistenceController = PersistenceController.shared
-
+    @Environment(\.scenePhase) private var scenePhase
+    let viewModel = FeedbackViewModel(
+        repository: FeedbackRepository(
+            fileService: FeedbackFileService.shared,
+            storageService: FeedbackStorageService()
+        )
+    )
+    
     var body: some Scene {
         WindowGroup {
-            FeedbackList()
-                .environment(\.managedObjectContext, persistenceController.container.viewContext)
+            FeedbackList(viewModel: viewModel)
+                .task(id: scenePhase) {
+                    if scenePhase == .active {
+                        Task {
+                            try await viewModel.syncFailedFeedbacks()
+                        }
+                    }
+                }
         }
     }
 }

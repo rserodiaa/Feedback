@@ -8,8 +8,12 @@
 import SwiftUI
 
 struct FeedbackList: View {
-    @StateObject private var viewModel = FeedbackViewModel(repository: FeedbackRepository())
     @State private var activeSheet: FeedbackSheetData?
+    @StateObject private var viewModel: FeedbackViewModel
+    
+    init(viewModel: FeedbackViewModel) {
+        _viewModel = StateObject(wrappedValue: viewModel)
+    }
     
     var body: some View {
         NavigationStack {
@@ -49,7 +53,7 @@ struct FeedbackList: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
-                        activeSheet = FeedbackSheetData(title: "", message: "", isEditing: false)
+                        activeSheet = FeedbackSheetData()
                     } label: {
                         Image(systemName: "plus")
                     }
@@ -92,4 +96,15 @@ struct FeedbackList: View {
         }
     }
 
+}
+
+#Preview {
+    FeedbackList(
+        viewModel: FeedbackViewModel(
+            repository: FeedbackRepository(
+                fileService: FeedbackFileService.shared,
+                storageService: FeedbackStorageService()
+            )
+        )
+    )
 }

@@ -63,6 +63,16 @@ class FeedbackViewModel: ObservableObject {
             await handle(error)
         }
     }
+
+    func syncFailedFeedbacks() async throws {
+        do {
+            try await repository.syncFailedFeedbacks()
+            await loadFeedbacks()
+        } catch {
+            print("ViewModel - Error syncing feedback: \(error)")
+            await handle(error)
+        }
+    }
     
     private func handle(_ error: Error) async {
         await MainActor.run {

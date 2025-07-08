@@ -10,4 +10,5 @@ protocol FeedbackRepoProtocol {
     func createFeedback(with title: String, and message: String) async throws -> Feedback
     func deleteFeedback(with title: String) async throws
     func updateFeedback(with title: String, and message: String) async throws
+    func syncFailedFeedbacks() async throws
 }

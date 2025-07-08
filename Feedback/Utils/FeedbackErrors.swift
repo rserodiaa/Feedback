@@ -12,6 +12,7 @@ enum FeedbackError: LocalizedError {
     case deleteFailed
     case notFound
     case saveFailed
+    case syncFailed
 
     var errorDescription: String? {
         switch self {
@@ -23,6 +24,8 @@ enum FeedbackError: LocalizedError {
             return "Could not save your feedback. Please try again."
         case .notFound:
             return "Feedback not found."
+        case .syncFailed:
+            return "Feedback syncing failed"
         }
     }
 }

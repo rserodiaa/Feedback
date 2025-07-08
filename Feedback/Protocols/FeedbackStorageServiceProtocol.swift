@@ -11,4 +11,5 @@ protocol FeedbackStorageServiceProtocol {
     func create(feedback: Feedback) async throws
     func update(feedback: Feedback) async throws
     func delete(feedback: Feedback) async throws
+    func fetchFailed() async throws -> [Feedback]
 }
