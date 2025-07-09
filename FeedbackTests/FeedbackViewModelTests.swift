@@ -137,4 +137,17 @@ struct FeedbackViewModelTests {
         #expect(viewModel.showErrorAlert == true)
         #expect(viewModel.errorMessage == "Feedback syncing failed.")
     }
+    
+    @Test
+    func clippedMessageWithDots() async {
+        let mockBigFeedback = Feedback(id: UUID(), title: "New Note",
+                                       message: "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged.",
+                                       status: .success, createdAt: .now,
+                                       fileName: "file.txt")
+        
+        let mockRepo = MockFeedbackRepository(feedbacks: [mockBigFeedback])
+        let viewModel = FeedbackViewModel(repository: mockRepo)
+        await viewModel.loadFeedbacks()
+        #expect(viewModel.feedbacks.first?.clippedMessage == "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the ...")
+    }
 }

@@ -19,7 +19,7 @@ class MockFeedbackRepository: FeedbackRepoProtocol {
     
     func createFeedback(with title: String, and message: String) async throws -> Feedback {
         if shouldThrow { throw FeedbackError.saveFailed }
-        let feedback = Feedback(id: UUID(), title: title, message: message, status: .success, createdAt: Date(), fileName: "file.txt")
+        let feedback = Feedback(id: UUID(), title: title, message: message, status: .success, createdAt: .now, fileName: "file.txt")
         feedbacks.append(feedback)
         return feedback
     }

@@ -33,7 +33,7 @@ struct Feedback: Identifiable {
                   title: entity.title ?? "",
                   message: entity.message ?? "",
                   status: FeedbackStatus(rawValue: entity.status ?? "failed") ?? .failed,
-                  createdAt: entity.createdAt ?? Date(),
+                  createdAt: entity.createdAt ?? .now,
                   fileName: entity.fileName ?? "")
     }
     

@@ -26,10 +26,10 @@ final class FeedbackRepository: FeedbackRepoProtocol {
         
         let id = UUID()
         let status: FeedbackStatus = Bool.random() ? .success : .failed
-        let feedback = Feedback(id: id, title: title, message: message, status: status, createdAt: Date(), fileName: "")
+        let feedback = Feedback(id: id, title: title, message: message, status: status, createdAt: .now, fileName: "")
         do {
             let fileName = try await fileService.save(feedback: feedback, toAzure: status == .success)
-            let feedbackWithFile = Feedback(id: id, title: title, message: message, status: status, createdAt: Date(), fileName: fileName)
+            let feedbackWithFile = Feedback(id: id, title: title, message: message, status: status, createdAt: .now, fileName: fileName)
             try await storageService.create(feedback: feedbackWithFile)
             return feedbackWithFile
         } catch {
