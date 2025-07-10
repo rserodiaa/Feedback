@@ -8,8 +8,9 @@
 import SwiftUI
 
 struct FeedbackList: View {
-    @State private var activeSheet: FeedbackSheetData?
     @StateObject private var viewModel: FeedbackViewModel
+    @State private var showSheet = false
+    @State private var activeSheet = FeedbackSheetData()
     
     init(viewModel: FeedbackViewModel) {
         _viewModel = StateObject(wrappedValue: viewModel)
@@ -19,9 +20,9 @@ struct FeedbackList: View {
         NavigationStack {
             VStack {
                 if viewModel.isLoading {
-                        ProgressView("Loading feedbacks...")
-                            .progressViewStyle(CircularProgressViewStyle())
-                            .padding()
+                    ProgressView("Loading feedbacks...")
+                        .progressViewStyle(CircularProgressViewStyle())
+                        .padding()
                 } else {
                     List {
                         ForEach(viewModel.feedbacks) { feedback in
@@ -42,7 +43,12 @@ struct FeedbackList: View {
                             
                             .contentShape(Rectangle())
                             .onTapGesture {
-                                activeSheet = FeedbackSheetData(title: feedback.title, message: feedback.message, isEditing: true)
+                                activeSheet = FeedbackSheetData(
+                                    title: feedback.title,
+                                    message: feedback.message,
+                                    isEditing: true
+                                )
+                                showSheet = true
                             }
                         }
                         .onDelete(perform: deleteFeedback)
@@ -54,27 +60,26 @@ struct FeedbackList: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
                         activeSheet = FeedbackSheetData()
+                        showSheet = true
                     } label: {
                         Image(systemName: "plus")
                     }
                 }
             }
-            .sheet(item: $activeSheet) { sheetData in
-                FeedbackSheetView(sheetData: sheetData) { updatedTitle, updatedMessage in
-                    Task {
-                        if sheetData.isEditing {
-                            try await viewModel.updateFeedback(with: updatedTitle, and: updatedMessage)
-                        } else {
-                            try await viewModel.createFeedback(with: updatedTitle, and: updatedMessage)
+            .sheet(isPresented: $showSheet) {
+                FeedbackSheetView(sheetData: $activeSheet)
+                    .onDisappear {
+                        Task {
+                            if activeSheet.isEditing {
+                                try await viewModel.updateFeedback(with: activeSheet.title, and: activeSheet.message)
+                            } else if !activeSheet.title.isEmpty && !activeSheet.message.isEmpty {
+                                try await viewModel.createFeedback(with: activeSheet.title, and: activeSheet.message)
+                            }
+                            activeSheet = FeedbackSheetData()
                         }
-                        activeSheet = nil
                     }
-                } onCancel: {
-                    activeSheet = nil
-                }
             }
         }
-
         .onAppear {
             Task {
                 await viewModel.loadFeedbacks()
@@ -95,7 +100,7 @@ struct FeedbackList: View {
             }
         }
     }
-
+    
 }
 
 #Preview {

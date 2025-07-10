@@ -7,28 +7,17 @@
 import SwiftUI
 
 struct FeedbackSheetView: View {
-    @State var title: String
-    @State var message: String
-    let isEditing: Bool
-    let onSave: (String, String) -> Void
-    let onCancel: () -> Void
-
-    init(sheetData: FeedbackSheetData, onSave: @escaping (String, String) -> Void, onCancel: @escaping () -> Void) {
-        _title = State(initialValue: sheetData.title)
-        _message = State(initialValue: sheetData.message)
-        self.isEditing = sheetData.isEditing
-        self.onSave = onSave
-        self.onCancel = onCancel
-    }
+    @Binding var sheetData: FeedbackSheetData
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         VStack(spacing: 16) {
-            Text("\(isEditing ? "Edit" : "Create") Feedback")
+            Text("\(sheetData.isEditing ? "Edit" : "Create") Feedback")
                 .font(.headline)
 
             Group {
-                if isEditing {
-                    Text(title)
+                if sheetData.isEditing {
+                    Text(sheetData.title)
                         .foregroundStyle(Color.secondary.opacity(0.8))
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(8)
@@ -37,7 +26,7 @@ struct FeedbackSheetView: View {
                                 .stroke(Color.secondary.opacity(0.2))
                         )
                 } else {
-                    TextField("Title", text: $title)
+                    TextField("Title", text: $sheetData.title)
                         .padding(8)
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
@@ -45,7 +34,7 @@ struct FeedbackSheetView: View {
                         )
                 }
             }
-            TextEditor(text: $message)
+            TextEditor(text: $sheetData.message)
                 .frame(height: 150)
                 .padding(4)
                 .overlay(
@@ -54,14 +43,10 @@ struct FeedbackSheetView: View {
                 )
 
             HStack {
-                Button("Cancel") {
-                    onCancel()
-                }
+                Button("Cancel") { dismiss() }
                 Spacer()
-                Button(isEditing ? "Update" : "Add") {
-                    onSave(title, message)
-                }
-                .disabled(title.isEmpty || message.isEmpty)
+                Button(sheetData.isEditing ? "Update" : "Add") { dismiss() }
+                    .disabled(sheetData.title.isEmpty || sheetData.message.isEmpty)
             }
         }
         .padding()
