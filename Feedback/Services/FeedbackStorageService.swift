@@ -40,7 +40,7 @@ final class FeedbackStorageService: FeedbackStorageServiceProtocol {
             entity.status = feedback.status.rawValue
             entity.createdAt = feedback.createdAt
             entity.fileName = feedback.fileName
-            try PersistenceController.shared.saveContext()
+            try self.context.save()
         }
     }
     
@@ -50,7 +50,7 @@ final class FeedbackStorageService: FeedbackStorageServiceProtocol {
             entity.message = feedback.message
             entity.status = feedback.status.rawValue
             entity.fileName = feedback.fileName
-            try PersistenceController.shared.saveContext()
+            try self.context.save()
         }
     }
     
@@ -60,7 +60,7 @@ final class FeedbackStorageService: FeedbackStorageServiceProtocol {
             request.predicate = NSPredicate(format: "id == %@", feedback.id as CVarArg)
             if let entity = try self.context.fetch(request).first {
                 self.context.delete(entity)
-                try PersistenceController.shared.saveContext()
+                try self.context.save()
             }
         }
     }

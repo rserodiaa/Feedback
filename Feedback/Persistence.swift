@@ -10,18 +10,6 @@ import CoreData
 final class PersistenceController {
     static let shared = PersistenceController()    
 
-//    init(inMemory: Bool = false) {
-//        container = NSPersistentContainer(name: "Feedback")
-//        if inMemory {
-//            container.persistentStoreDescriptions.first!.url = URL(fileURLWithPath: "/dev/null")
-//        }
-//        container.loadPersistentStores(completionHandler: { (storeDescription, error) in
-//            if let error = error as NSError? {
-//                fatalError("Unresolved error \(error), \(error.userInfo)")
-//            }
-//        })
-//        container.viewContext.automaticallyMergesChangesFromParent = true
-//    }
     private init() { }
     
     lazy var container: NSPersistentContainer = {
@@ -47,5 +35,16 @@ final class PersistenceController {
                 throw error
             }
         }
+    }
+}
+
+// Use this to create background context and inject to storage service
+// to run all crud operations on background thread, also notice automaticallyMergesChangesFromParent
+// property which makes sure changes in the background context are saved and merged into the main context
+extension PersistenceController {
+    func newBackgroundContext() -> NSManagedObjectContext {
+        let context = container.newBackgroundContext()
+        context.automaticallyMergesChangesFromParent = true
+        return context
     }
 }
